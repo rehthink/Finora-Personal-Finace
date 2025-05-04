@@ -6,7 +6,7 @@ import plotly.express as px
 import pandas as pd
 
 # Set up page configuration
-st.set_page_config(page_title="Finora - Personal Finance Dashboard", layout="wide")
+st.set_page_config(page_title="Finora", layout="wide")
 
 # Create a cached function for fetching and preprocessing data
 @st.cache_data(ttl=300)  # Cache for 5 minutes (300 seconds)
