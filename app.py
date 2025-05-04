@@ -19,18 +19,23 @@ def get_cached_data():
         st.error(f"Error fetching data: {e}")
         return None
 
-# Tab Navigation (Horizontal Tab View)
-tab_options = ["📊 Summary", "📄 Transactions", "➕ Add New"]
-selected_tab = st.selectbox("Go to", tab_options, index=0)
-
 # Load data using the cached function
 df = get_cached_data()
 if df is None:
     st.stop()
 
+
+st.markdown("""
+    <h1 style='text-align: center; font-size: 28px; margin-top: 0;'>
+       Finora - Finance Tracker
+    </h1>
+""", unsafe_allow_html=True)
+
+tab1, tab2, tab3 = st.tabs(["📊 Summary", "📄 Transactions", "➕ Manage"])
+
 # === Page: Summary ===
-if selected_tab == "📊 Summary":
-    st.title("📊 Finance Summary")
+with tab1:
+    #st.markdown("<h2 style='text-align: left; font-size: 20px;'>📊 Finance Summary</h2>", unsafe_allow_html=True)
 
     # Month Filter
     months = ["All"] + sorted(df["Month"].dropna().unique())
@@ -52,29 +57,30 @@ if selected_tab == "📊 Summary":
         return income, expense, savings
     
     income, expense, savings = calculate_summary(filtered_df)
-
     st.markdown(
-        """
-        <div style="display: flex; justify-content: space-between; padding: 20px;">
-            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 30%; text-align: center;">
-                <h4>Total Income</h4>
-                <p style="font-size: 18px;">₹ {income:,.2f}</p>
-            </div>
-            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 30%; text-align: center;">
-                <h4>Total Expense</h4>
-                <p style="font-size: 18px;">₹ {expense:,.2f}</p>
-            </div>
-            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 20px; width: 30%; text-align: center;">
-                <h4>Savings</h4>
-                <p style="font-size: 18px;">₹ {savings:,.2f}</p>
-            </div>
-        </div>
-        """.format(income=income, expense=expense, savings=savings),
-        unsafe_allow_html=True
-    )
+        f"""
+            <div style="display: flex; gap: 1px;">
+                <div style="text-align: center;">
+                    <p style="font-weight: bold; font-size: 20px;">💲 Total Income</p>
+                    <p style="font-size: 18px; text-align: center;">₹ {income:,.2f}</p>                            
+                    </div>
+                    <div style="text-align: center; margin-left: 35px;">
+                            <p style="font-weight: bold; font-size: 20px;">📊 Total Expense</p>
+                            <p style="font-size: 18px; text-align: center;">₹ {expense:,.2f}</p>
+                    </div>
+                    <div style="text-align: center; margin-left: 35px;">
+                            <p style="font-weight: bold; font-size: 20px;">💰 Total Savings</p>
+                            <p style="font-size: 18px; text-align: center;">₹ {savings:,.2f}</p>
+                    </div>
+                </div>
+
+                    """,
+                    unsafe_allow_html=True
+        )
+
 
     st.markdown("---")
-    st.subheader("📉 Income vs Expense (Monthly)")
+    st.markdown("<h2 style='text-align: left; font-size: 24px;'>📉 Income vs Expense (Monthly)</h2>", unsafe_allow_html=True)
     
     # Cache chart data preparation
     @st.cache_data
@@ -99,6 +105,14 @@ if selected_tab == "📊 Summary":
         insidetextanchor='middle'
     )
 
+    # Set figure layout size and spacing
+    fig_hist.update_layout(
+        height=200,   # Adjust height for better bar spacing
+        width=500,   # Optional: specify width (or omit to use container width)
+        bargap=.2,   # Space between bar groups
+        margin=dict(l=80, r=40, t=60, b=60)
+    )
+
     st.plotly_chart(fig_hist, use_container_width=True)
 
     st.markdown("### 📦 Income & Expense by Category")
@@ -118,13 +132,20 @@ if selected_tab == "📊 Summary":
         x="Amount",
         y="Category",
         color="Type",
-        title="Income and Expenses by Category (Stacked)",
+        title="Income and Expenses by Category",
         text="Amount",
         orientation='h'
     )
 
-    fig_stacked.update_traces(texttemplate='₹%{text:.2s}', textposition='inside')
-    fig_stacked.update_layout(barmode="stack", xaxis_title="Amount (₹)", yaxis_title="Category")
+    fig_stacked.update_traces(texttemplate='₹%{text:.2s}', textposition='inside',insidetextanchor='middle')
+    #fig_stacked.update_layout(barmode="stack", xaxis_title="Amount (₹)", yaxis_title="Category")
+    # Set figure layout size and spacing
+    fig_stacked.update_layout(
+        height=400,   # Adjust height for better bar spacing
+        width=500,   # Optional: specify width (or omit to use container width)
+        bargap=.2,   # Space between bar groups
+        margin=dict(l=80, r=40, t=60, b=60)
+    )
 
     st.plotly_chart(fig_stacked, use_container_width=True)
 
@@ -166,7 +187,7 @@ if selected_tab == "📊 Summary":
         st.rerun()
 
 # === Page: Transactions ===
-elif selected_tab == "📄 Transactions":
+with tab2:
     st.title("📄 All Transactions")
 
     transaction_id_col = df.columns[1]
@@ -190,7 +211,7 @@ elif selected_tab == "📄 Transactions":
     # st.download_button("📥 Download as CSV", data=csv, file_name="transactions.csv", mime="text/csv")
 
 # === Page: Add Transaction ===
-elif selected_tab == "➕ Add New":
+with tab3:
     st.title("➕ Add New Transaction")
 
     with st.form("new_transaction", clear_on_submit=True):
