@@ -152,33 +152,60 @@ with tab1:
     st.markdown("### 📊 Income & Expense Distribution")
     col1, col2 = st.columns(2)
 
-    # Cache pie chart data
+
+    # Prepare pie chart data (cached for performance)
     @st.cache_data
     def prepare_pie_chart_data(dataframe, type_filter):
         return dataframe[dataframe['Type'] == type_filter]
-    
-    with col1:
-        expenses_pie_data = prepare_pie_chart_data(filtered_df, 'Expenses')
-        exp_fig = px.pie(
-            expenses_pie_data,
-            names="Category",
-            values="Amount",
-            title="Expenses by Category",
-            hole=0.4  # Donut chart
-        )
-        exp_fig.update_traces(textinfo='percent+label', pull=[0.1, 0.1, 0.1, 0.1])  # Add percentage and labels
+
+    # Title
+    st.markdown("### 🔍 Category-wise Summary")
+    #st.write("Click to expand each chart and explore category-wise distribution.")
+
+    # Expenses Chart
+    expenses_pie_data = prepare_pie_chart_data(filtered_df, 'Expenses')
+    exp_fig = px.pie(
+        expenses_pie_data,
+        names="Category",
+        values="Amount",
+        title="Expenses by Category",
+        hole=0.4
+    )
+    exp_fig.update_traces(
+        textinfo='percent+label',
+        pull=[0.05]*len(expenses_pie_data),
+        hoverinfo='label+percent+value'
+    )
+    exp_fig.update_layout(
+        margin=dict(t=40, b=10),
+        legend_title_text='Categories',
+        showlegend=True
+    )
+
+    with st.expander("📉 View Expenses by Category", expanded=True):
         st.plotly_chart(exp_fig, use_container_width=True)
 
-    with col2:
-        income_pie_data = prepare_pie_chart_data(filtered_df, 'Income')
-        inc_fig = px.pie(
-            income_pie_data,
-            names="Category",
-            values="Amount",
-            title="Income by Category",
-            hole=0.4  # Donut chart
-        )
-        inc_fig.update_traces(textinfo='percent+label', pull=[0.1, 0.1, 0.1, 0.1])  # Add percentage and labels
+    # Income Chart
+    income_pie_data = prepare_pie_chart_data(filtered_df, 'Income')
+    inc_fig = px.pie(
+        income_pie_data,
+        names="Category",
+        values="Amount",
+        title="Income by Category",
+        hole=0.4
+    )
+    inc_fig.update_traces(
+        textinfo='percent+label',
+        pull=[0.05]*len(income_pie_data),
+        hoverinfo='label+percent+value'
+    )
+    inc_fig.update_layout(
+        margin=dict(t=40, b=10),
+        legend_title_text='Categories',
+        showlegend=True
+    )
+
+    with st.expander("💰 View Income by Category", expanded=True):
         st.plotly_chart(inc_fig, use_container_width=True)
 
     # Refresh Button with cache clearing
@@ -188,7 +215,7 @@ with tab1:
 
 # === Page: Transactions ===
 with tab2:
-    st.title("📄 All Transactions")
+    st.markdown("<h2 style='text-align: left; font-size: 20px;'>📄 All Transactions</h2>", unsafe_allow_html=True)
 
     transaction_id_col = df.columns[1]
     
@@ -212,10 +239,11 @@ with tab2:
 
 # === Page: Add Transaction ===
 with tab3:
-    st.title("➕ Add New Transaction")
+    st.markdown("<h2 style='text-align: left; font-size: 20px;'>➕ Register New Transaction</h2>", unsafe_allow_html=True)
 
-    with st.form("new_transaction", clear_on_submit=True):
-        st.markdown("#### 🧾 Transaction Details")
+    with st.expander("📝 Add Transaction", expanded=True):
+      with st.form("new_transaction", clear_on_submit=True):
+        st.markdown("<h2 style='text-align: left; font-size: 20px;'>🧾 Transaction Details</h2>", unsafe_allow_html=True)
         col1, col2 = st.columns(2)
         with col1:
             date = st.date_input("📅 Date")
