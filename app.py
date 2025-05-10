@@ -1,9 +1,13 @@
+from langchain_ollama import ChatOllama
 import streamlit as st
 from api_handler import fetch_transactions, add_transaction
 from utils import preprocess_data, filter_by_month
-
+from finance_bot import PersonalFinanceBot
 import plotly.express as px
 import pandas as pd
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from bot_logic import financial_chatbot
+
 
 # Set up page configuration
 st.set_page_config(page_title="Finora", layout="wide")
@@ -31,7 +35,45 @@ st.markdown("""
     </h1>
 """, unsafe_allow_html=True)
 
-tab1, tab2, tab3 = st.tabs(["📊 Summary", "📄 Transactions", "➕ Manage"])
+# bot_builder.py
+
+from langchain.chains import RetrievalQA
+from langchain_community.document_loaders.dataframe import DataFrameLoader
+from langchain.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.chat_models import ChatOpenAI
+from langchain.vectorstores import FAISS
+from langchain.schema import Document
+
+def build_finance_bot(df):
+    # Convert DataFrame to Documents using 'Remark' column
+    documents = [
+        Document(
+            page_content=str(row["Remark"]), 
+            metadata={col: str(row[col]) for col in df.columns if col != "Remark"}
+        ) for _, row in df.iterrows()
+    ]
+
+    # Use a local embedding model (e.g., `all-MiniLM-L6-v2`)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+    # Create FAISS index from documents
+    faiss_index = FAISS.from_documents(documents, embeddings)
+
+    # Use Ollama (make sure the model is running locally, e.g., `mistral` or `llama3`)
+    llm = ChatOllama(model="mistral", temperature=0.1)
+
+    # Build RAG pipeline
+    qa = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=faiss_index.as_retriever()
+    )
+
+    return qa
+
+
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Summary", "📄 Transactions", "➕ Manage", "Chat Bot"])
 
 # === Page: Summary ===
 with tab1:
@@ -278,3 +320,46 @@ with tab3:
                 st.rerun()
             except Exception as e:
                 st.error(f"❌ Failed to add transaction: {e}")
+
+with tab4:
+    st.markdown("<h2 style='text-align: left; font-size: 20px;'>💬 Financial Sheet ChatBot</h2>", unsafe_allow_html=True)
+    st.markdown("Ask financial questions based on the context of your financial data.")
+
+    # 📝 Instructions expander
+    with st.expander("ℹ️ How to Use This ChatBot", expanded=False):
+        st.markdown("""
+        - Ask any **financial question** related to the financial data.
+        - You can type queries like:
+            - *"What was the total expense in January?"*
+            - *"Show the highest earning month."*
+        - To **clear the chat history** and start fresh, just type:
+            - `"reset"` or `"clear"` or `"start over"`
+        """)
+
+    # Initialize chat history
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    # Chat input
+    user_query = st.chat_input("Ask a question about your financial data...")
+
+    # Check for reset command
+    if user_query and user_query.strip().lower() in ["reset", "clear", "start over"]:
+        st.session_state.chat_history = []
+        st.success("🔄 Chat history has been cleared. Start fresh!")
+        user_query = None  # Prevent triggering a response
+
+    # Process user input
+    if user_query:
+        with st.spinner("🤔 Thinking..."):
+            response = financial_chatbot(df, user_query, st.session_state.chat_history)
+            st.session_state.chat_history.append((user_query, response))
+
+    # Show chat history (latest on top)
+    for user_msg, bot_msg in reversed(st.session_state.chat_history):
+        st.chat_message("user").write(user_msg)
+        st.chat_message("assistant").write(bot_msg)
+
+    # Optional: show DataFrame
+    with st.expander("📂 View DataFrame"):
+        st.dataframe(df)
