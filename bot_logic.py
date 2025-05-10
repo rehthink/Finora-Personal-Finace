@@ -4,17 +4,23 @@ from dotenv import load_dotenv
 import pandas as pd
 from duckduckgo_search import DDGS
 import os
+import streamlit as st
 
 
-load_dotenv()
+# Try to load from Streamlit secrets
+try:
+    groq_api_key = st.secrets["GROQ_API_KEY"]
+except (AttributeError, KeyError, FileNotFoundError):
+    # Fallback to .env if not found
+    load_dotenv()
+    groq_api_key = os.getenv("GROQ_API_KEY")
 
-api_key = os.getenv("GROQ_API_KEY")
+# Raise error if nothing is found
+if not groq_api_key:
+    raise ValueError("❌ GROQ_API_KEY not found in Streamlit secrets or .env!")
 
-if not api_key:
-    raise ValueError("GROQ_API_KEY environment variable is not set!")
-
-# Initialize Groq Client
-client = Groq(api_key=api_key)
+# Initialize the client
+client = Groq(api_key=groq_api_key)
 
 
 RELEVANT_KEYWORDS = [
