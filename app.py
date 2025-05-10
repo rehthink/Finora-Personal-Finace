@@ -35,45 +35,8 @@ st.markdown("""
     </h1>
 """, unsafe_allow_html=True)
 
-# bot_builder.py
 
-from langchain.chains import RetrievalQA
-from langchain_community.document_loaders.dataframe import DataFrameLoader
-from langchain.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.chat_models import ChatOpenAI
-from langchain.vectorstores import FAISS
-from langchain.schema import Document
-
-def build_finance_bot(df):
-    # Convert DataFrame to Documents using 'Remark' column
-    documents = [
-        Document(
-            page_content=str(row["Remark"]), 
-            metadata={col: str(row[col]) for col in df.columns if col != "Remark"}
-        ) for _, row in df.iterrows()
-    ]
-
-    # Use a local embedding model (e.g., `all-MiniLM-L6-v2`)
-    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-
-    # Create FAISS index from documents
-    faiss_index = FAISS.from_documents(documents, embeddings)
-
-    # Use Ollama (make sure the model is running locally, e.g., `mistral` or `llama3`)
-    llm = ChatOllama(model="mistral", temperature=0.1)
-
-    # Build RAG pipeline
-    qa = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=faiss_index.as_retriever()
-    )
-
-    return qa
-
-
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Summary", "📄 Transactions", "➕ Manage", "Chat Bot"])
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Summary", "📄 Transactions", "➕ Manage", "💬 Chat Bot"])
 
 # === Page: Summary ===
 with tab1:
@@ -103,15 +66,15 @@ with tab1:
         f"""
             <div style="display: flex; gap: 1px;">
                 <div style="text-align: center;">
-                    <p style="font-weight: bold; font-size: 20px;">💲 Total Income</p>
+                    <p style="font-weight: bold; font-size: 20px;">💲 Income</p>
                     <p style="font-size: 18px; text-align: center;">₹ {income:,.2f}</p>                            
                     </div>
                     <div style="text-align: center; margin-left: 35px;">
-                            <p style="font-weight: bold; font-size: 20px;">📊 Total Expense</p>
+                            <p style="font-weight: bold; font-size: 20px;">📊 Expense</p>
                             <p style="font-size: 18px; text-align: center;">₹ {expense:,.2f}</p>
                     </div>
                     <div style="text-align: center; margin-left: 35px;">
-                            <p style="font-weight: bold; font-size: 20px;">💰 Total Savings</p>
+                            <p style="font-weight: bold; font-size: 20px;">💰 Savings</p>
                             <p style="font-size: 18px; text-align: center;">₹ {savings:,.2f}</p>
                     </div>
                 </div>
@@ -122,7 +85,7 @@ with tab1:
 
 
     st.markdown("---")
-    st.markdown("<h2 style='text-align: left; font-size: 24px;'>📉 Income vs Expense (Monthly)</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align: left; font-size: 22px;'>📉 Income vs Expense (Monthly)</h2>", unsafe_allow_html=True)
     
     # Cache chart data preparation
     @st.cache_data
@@ -157,7 +120,7 @@ with tab1:
 
     st.plotly_chart(fig_hist, use_container_width=True)
 
-    st.markdown("### 📦 Income & Expense by Category")
+    st.markdown("<h2 style='text-align: left; font-size: 22px;'>📦 Income & Expense by Category</h2>", unsafe_allow_html=True)
     
     # Cache stacked chart data preparation
     @st.cache_data
@@ -191,7 +154,9 @@ with tab1:
 
     st.plotly_chart(fig_stacked, use_container_width=True)
 
-    st.markdown("### 📊 Income & Expense Distribution")
+
+    st.markdown("<h2 style='text-align: left; font-size: 22px;'>📊 Income & Expense Distribution</h2>", unsafe_allow_html=True)
+
     col1, col2 = st.columns(2)
 
 
@@ -201,7 +166,8 @@ with tab1:
         return dataframe[dataframe['Type'] == type_filter]
 
     # Title
-    st.markdown("### 🔍 Category-wise Summary")
+    st.markdown("<h2 style='text-align: left; font-size: 22px;'>🔍 Category-wise Summary</h2>", unsafe_allow_html=True)
+
     #st.write("Click to expand each chart and explore category-wise distribution.")
 
     # Expenses Chart
