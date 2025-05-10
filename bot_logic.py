@@ -33,9 +33,10 @@ RELEVANT_KEYWORDS = [
 ]
 
 def search_web(query):
+    finance_query = f"{query} site:investopedia.com OR site:forbes.com OR site:finance.yahoo.com"
     with DDGS() as ddgs:
-        results = ddgs.text(query, max_results=3)
-        return "\n\n".join([r['body'] for r in results if 'body' in r])
+        results = ddgs.text(finance_query, max_results=5)
+        return "\n\n".join([r['body'] for r in results if 'body' in r])    
 
 def format_df_context(df: pd.DataFrame) -> str:
     """
