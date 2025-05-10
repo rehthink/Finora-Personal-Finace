@@ -9,7 +9,7 @@ import streamlit as st
 
 # Try to load from Streamlit secrets
 try:
-    groq_api_key = st.secrets["GROQ_API_KEY"]
+    groq_api_key = st.secrets.get("GROQ_API_KEY")
 except (AttributeError, KeyError, FileNotFoundError):
     # Fallback to .env if not found
     load_dotenv()
