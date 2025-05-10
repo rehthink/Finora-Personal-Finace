@@ -1,17 +1,20 @@
 # bot_logic.py
 from groq import Groq
+from dotenv import load_dotenv
 import pandas as pd
 from duckduckgo_search import DDGS
-import streamlit as st
+import os
 
-import streamlit as st
+
+load_dotenv()
+
+api_key = os.getenv("GROQ_API_KEY")
+
+if not api_key:
+    raise ValueError("GROQ_API_KEY environment variable is not set!")
 
 # Initialize Groq Client
-
-groq_api_key = st.secrets["groq"]["api_key"]
-# Initialize Groq Client with the API key from Streamlit secrets
-client = Groq(api_key=groq_api_key)
-
+client = Groq(api_key=api_key)
 
 
 RELEVANT_KEYWORDS = [
@@ -70,7 +73,7 @@ def financial_chatbot(df: pd.DataFrame, user_query: str, chat_history: list) -> 
     })
 
     response = client.chat.completions.create(
-        model="gemma2-9b-it",  # Change to "gemma-2-9b-it" if that's the correct name
+        model="gemma2-9b-it", 
         messages=messages,
         temperature=0.5
     )
